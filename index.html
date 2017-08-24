@@ -49,6 +49,7 @@
         border-radius: 25px;
         border: 2px black solid;
         padding: 10px 10px 10px 10px;
+        visibility: hidden;
         
     }
     
@@ -455,6 +456,8 @@ data.forEach( function(d)
         
         
         setBoxesStyle()
+        
+        d3.selectAll(".step").style({"visibility":"visible"})
         
         //-------- start the transitions
         
