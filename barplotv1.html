@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+
+<meta http-equiv="cache-control" content="no-cache" />
+
+   
+<style>
+    text
+    {
+        fill:black;
+        font: 20px sans-serif bold;
+        text-anchor: middle;
+        text-align: center;
+        position: fixed;
+    }
+    
+    #title
+    {
+        font: bold 30px Georgia;
+        text-align: center;
+        position: fixed;
+        background: white;
+        opacity: 0.9;
+        width:100%
+        
+    }
+    
+    
+     #descr
+    {
+        font:20px Georgia;
+        text-align: left;
+        margin-bottom: 300px;
+        
+    }
+    
+    text:hover
+    {
+        
+        fill:black;
+        
+    }
+    
+    .step
+    {
+        font:20px Georgia;
+        text-align: left;
+        margin-bottom: 200px;
+        background-color:bisque;
+        border-radius: 25px;
+        border: 2px black solid;
+        padding: 10px 10px 10px 10px;
+        
+    }
+    
+    #dummy
+    {
+     
+        margin-bottom: 200px;
+        height:20px;
+        width:20px;
+        
+    }
+    
+    .svg
+    {
+        position:fixed;
+        
+    }
+    
+    #sections
+    {
+        overflow:visible;
+        clip-path: inset(1000px,0px,0px,1000px)
+        
+    }
+    
+</style>
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+
+<body>
+<div id="sections">
+    <p class="step">
+         The UK general election uses the so-called 'first-past-the-post' system: each of 650 seats in the House of Commons goes to the party which won majority in the corresponding constituency. The resulting distribution of seats is not proportional to the shares of the popular vote the parties gained. Instead, the convential wisdom is that it benefits larger parties at the expense of smaller ones. Let's see how this worked in the last General Election on June 8th, 2017.
+    </p>    
+    
+    
+    <p class="step">
+         Constituencies vary in size. Each has voters supporting various parties: Conservatives, Labour, Lib Dems, UKIP, and so on..
+    </p>
+    
+    <p class="step">
+        <!---Some of the votes are cast in constituencies where other parties won the majorities.-->
+         Votes for a particular party cast in the constituencies where this party didn't reach the majority don't contribute.
+    </p>
+    
+    <p class="step">
+         Each constituency where a party won the majority contributes equally (1 seat), independently of the number of voters.
+    </p>
+    
+    <p class="step">
+         The final distribution of seats differs from what you would get in a proportional system: for example, Conservatives, SNP, and DUP got more than their share of the popular vote, whereas LD, UKIP, and Greens got less.
+    </p>
+    
+    
+    <div id="dummy">
+    </div>
+    
+</div>
+</body>
+
+
+<script>
+    columns= ['Con', 'Lab', 'LD', 'Others', 'SNP', 'Ukip', 'DUP', 'SF', 'PC',
+       'Green', 'SDLP', 'UUP', 'Ind', 'alliance']
+    
+    colWinners = ['Con', 'DUP', 'Green', 'Ind', 'LD', 'Lab', 'PC', 'SF', 'SNP'];  
+
+    var dt;
+    
+    var x,y;
+    
+     var avgVote;
+    
+    var cH,cN;
+    
+    
+    var currentHeight;
+    
+    
+    
+    totals=[{'Party': 'Con',
+  'Percent': 0.4233161022857835,
+  'Seats': 319.0,
+  'Votes': 13629180.051999997},
+ {'Party': 'Lab',
+  'Percent': 0.39989030399962405,
+  'Seats': 261.0,
+  'Votes': 12874957.802999992},
+ {'Party': 'SNP',
+  'Percent': 0.03037125763567803,
+  'Seats': 34.0,
+  'Votes': 977839.8140000002},
+ {'Party': 'DUP',
+  'Percent': 0.009076624482423776,
+  'Seats': 10.0,
+  'Votes': 292233.035},
+ {'Party': 'LD',
+  'Percent': 0.053595946655110825,
+  'Seats': 12.0,
+  'Votes': 1725587.103999999},
+ {'Party': 'Others',
+  'Percent': 0.04000898950137757,
+  'Seats': 0.0,
+  'Votes': 1288138.3880000007},
+ {'Party': 'Ukip',
+  'Percent': 0.01779988634692068,
+  'Seats': 0.0,
+  'Votes': 573089.1279999999},
+ {'Party': 'Green',
+  'Percent': 0.003744058868518246,
+  'Seats': 2.0,
+  'Votes': 120544.55799999999},
+ {'Party': 'Ind',
+  'Percent': 0.001743359128076634,
+  'Seats': 1.0,
+  'Votes': 56129.581},
+ {'Party': 'PC',
+  'Percent': 0.004422223736547492,
+  'Seats': 4.0,
+  'Votes': 142378.90600000002},
+ {'Party': 'SDLP',
+  'Percent': 0.002673355390992434,
+  'Seats': 0.0,
+  'Votes': 86071.94899999998},
+ {'Party': 'SF',
+  'Percent': 0.007291936967515197,
+  'Seats': 7.0,
+  'Votes': 234772.836},
+ {'Party': 'UUP',
+  'Percent': 0.002543567189742499,
+  'Seats': 0.0,
+  'Votes': 81893.259},
+ {'Party': 'alliance',
+  'Percent': 0.0016117137214600075,
+  'Seats': 0.0,
+  'Votes': 51891.096000000005}]
+    
+    
+    d3.csv("./by_const1.csv",
+      
+           
+   
+           
+           
+function(data){
+        
+
+data.forEach( function(d)
+             {
+                for(var nm in columns)
+                    {
+                        cl = columns[nm]
+                        d[cl]=+d[cl]
+                    }
+
+})        
+  
+    
+    var id=0;
+        
+ function appendRect(row, party,fl)
+        {
+            
+            var x = xScale(party)
+            var y0 = yScale(currentHeight[party])
+            var y = yScale(currentHeight[party]+row[party])
+            var rct = d3.selectAll("svg").select("#rects").append("rect")
+            
+            rct.attr("x",x).attr("y",yScale(0))
+                .attr("width",colWidth)
+                .attr("height",0)
+                .attr("fill",colorScale(party)).attr("fill-opacity",1).attr("id","id"+id)
+                .attr("stroke",0)
+            
+            rct.data([{"Party":party,"Winner":row.Winner,"width":row[party],"yRaw":currentHeight[party],"cN":cN[party][row.Winner],"res":row[party]}])
+            
+            id+=1;
+            cN[party][row.Winner]+=1;
+            currentHeight[party]+=row[party];
+            if (cH[party][row.Winner]>currentHeight[party])
+                cH[party][row.Winner]=currentHeight[party]
+              
+        }       
+           
+           function appendAll(data)
+                {
+                    var flag=0;
+
+                    d3.select("svg").append("g").attr("id","rects")
+                    
+                    for (var i in data)
+                        {
+                           
+                            var row = data[i];
+                      //      console.log("currentHeight",currentHeight, row)
+                            for (var j in columns)
+                                {
+                                    var party = columns[j];
+                                    appendRect(row,party,flag);
+                                    flag=1-flag;
+                                    
+                                }
+                            
+                            
+                        }
+        
+        
+                }   
+    
+        function initArrays()
+        {
+        
+         currentHeight = new Array(columns.length);
+
+         
+        
+        for (var i in columns)
+            {
+                currentHeight[columns[i]]=0
+                
+            }
+        
+        
+        
+         cH =  new Array(columns.length)
+        
+        cN = new Array(columns.length);
+        
+        for (var i in columns)
+            {
+              //  console.log(i,columns[i])
+                cH[columns[i]] = new Array(colWinners.length)
+                cN[columns[i]] = new Array(colWinners.length)
+               // console.log(i,cH[columns[i]])
+                for (var j in colWinners)
+                    {
+                       // console.log("ij",i,j)
+                        cH[columns[i]][colWinners[j]]=1000000000
+                        cN[columns[i]][colWinners[j]]=0
+                        
+                    }
+            }
+        
+        console.log("cH",cH)
+        
+        }
+        
+        
+        function getScrollInd()
+        {
+            iMin=0;
+            minDist=1000000000;
+            
+            d3.selectAll(".step").each(function(d,i){
+                     dist=Math.abs((this.getBoundingClientRect().top+this.getBoundingClientRect().bottom)/2-height/2);
+                     if (dist<minDist)
+                         {
+                            iMin=i;
+                            minDist=dist;
+                         }
+                         
+                    
+            })
+            
+            return iMin
+            
+        }
+        
+        function setBoxesStyle()
+        {
+            
+            iMin=getScrollInd()
+            
+            d3.selectAll(".step").each(function(d,i){
+                if (i==iMin)
+                    d3.select(this).style({opacity:1,border:"2px black solid"})
+                else
+                    d3.select(this).style({opacity:0.3,border:"0px black solid"})
+            })
+
+            
+        }
+        
+        
+        function drawFrames()
+        {
+            d3.select("svg").append("g").attr("id","rects1").selectAll("rect").data(totals).enter().append("rect").attr("x",function(d){return xScale(d.Party)}).attr("y",function(d){return yScale(d.Votes)}).attr("height",function(d){return -yScale(d.Votes)+yScale(0)}).attr("width",colWidth).style({fill:"none",stroke:"black"})
+        }
+        
+        
+        initArrays()
+        
+        margin = {right:10,bottom:10,left:20,top:10}    
+        
+        var headerHeight = 100;
+        var width = window.innerWidth-margin.left-margin.right;
+        var height = window.innerHeight-headerHeight-margin.top-margin.bottom;
+        var textSize = 20;
+        
+        
+        var lowerBorder =  height/4, upperBorder = height*0.75
+        
+        
+        
+        //var colWidth = Math.round(width/columns.length)-6;
+        
+        
+        //------Set up the scales
+       
+        xScale = d3.scale.ordinal().rangeRoundBands([margin.left,width-margin.right],.35)
+        
+       
+        
+        yScale = d3.scale.linear().rangeRound([height-2*textSize-margin.bottom,headerHeight+margin.top])
+        
+        
+        xScale.domain(columns)
+        
+        var colWidth = xScale(columns[1])-xScale(columns[0])
+        
+        yScale.domain([0,0.8*15000000]).nice()
+        
+        
+        
+        var colorScale = d3.scale.category20()
+       
+        
+        //------- text above
+        
+         d3.select("body").style("margin-left",margin.left).style("margin-right",margin.right).
+         style("margin-top",margin.top).style("margin-bottom",margin.bottom)
+         
+         
+         d3.select("#sections").style({"position":"absolute","left":"50%",border:"0px solid black","height":"50%","top":"20%",width:"30%"})
+    
+        
+         d3.select("body").append("p").attr("id","title").text("British general election: how (non)proportional it is").style({"position":"fixed","left":"0%","height":"10%","top":"0%",width:"100%","text-align":"center"})
+         
+        //------- the main svg
+        
+        var svg = d3.select("body").append("svg").attr("width",width).attr("height",height).style("position","fixed").style("bottom",0).style("left",0)
+        
+        
+        //------- the axis
+        
+        var yAxis = d3.svg.axis()
+        
+        axScale = d3.scale.linear().rangeRound([0*(height-2*textSize-margin.bottom)+yScale(0),yScale(15000000)+0*(headerHeight+margin.top)])
+        
+        axScale.domain([0,100*15000000/32196224.0])//.nice()
+        
+        yAxis.scale(axScale)
+        
+        yAxis.orient("right").ticks(10)
+        
+        
+        
+        //yAxis.style("stroke-width",2).style("stroke","blue")
+        
+        d3.select("svg").append("g").attr("transform","translate("+(0)+",0)").call(yAxis)        
+        
+        
+        
+     //   d3.selectAll(".domain").style("fill","blue").style("stroke-width","100px")
+        
+        //-------- column name labels
+        
+        d3.select("body").select("svg").append("g").attr("id","columnNames").selectAll("text").data(columns).enter().append("text").attr("x",function(d){return xScale(d)+colWidth*0.5}).attr("y",yScale(0)+textSize).text(function(d){console.log(d);return d})
+        
+        
+        function txtFun1(d){return (100*d.Percent).toFixed(1)+"%"}
+        function txtFun2(d){return (100*d.Seats/650.0).toFixed(1)+"%"}
+        
+        txtFun=txtFun1
+        
+        //-------- percentage labels
+        function drawPercentageLabels()
+        {
+         d3.selectAll("#pctLabels").remove()
+            
+         var tmp1 = d3.select("body").selectAll("svg").append("g").attr("id","pctLabels")
+             
+         var tmp2 = tmp1.selectAll("text").data(totals).enter()
+             
+       var tmp3 = tmp2.append("text").attr("x",function(d){return xScale(d.Party)+colWidth*0.5}).attr("y",function(d){return yScale(d.Votes)-5}).text(txtFun).style({"font-size":"30px","font-weight":"normal","font-style":"italic","opacity":1,"background-color":"red"})
+            
+        }
+        
+        
+        
+        drawPercentageLabels()
+        
+       //------- append black frame rectangles
+       
+       drawFrames()
+       
+       
+        window.scrollTo(0,0)
+        
+        //-------- append all the rectangles
+       
+        appendAll(data)
+        
+        
+        setBoxesStyle()
+        
+        //-------- start the transitions
+        
+        avgVote=49532.652307692311//3000000
+        
+        ht = (yScale(0)-yScale(10000000))*avgVote/10000000.0
+        
+        
+        var durm1 = 1000, dur0 = 500, delay0=500, dur1 = 500, delay1=500,delay2=500, dur2=500, dur3 = 500 , dur4 = 500, dur5 = 500, dur6 = 500
+        
+        tm1 = durm1
+        
+        t0 = delay0+durm1
+        
+        t1 = t0+delay1+dur0
+        
+        t2 = t1+dur1+delay2
+        
+        t3 = t2+dur2
+        
+        t4 = t3+dur3
+        
+        t5 = t4+dur4
+        
+        t6 = t5+dur5
+        
+      //  d3.select("#descr").text("Step -1: Parlamentary election in UK is determined by majorities in 650 constituencies. The resulting distribution of seats //in the parlaiment is not proportional to the shares of the popular vote. The convential wisdom is that the 'first past the post' system is advanageous //to large parties and disadvanageous to smaller ones. Let's see how this worked in the last general election on June 8th, 2017")
+        
+        
+        
+        //--------------------frame 0-1
+        
+        d3.select("#rects").selectAll('rect').transition("InitialBars").duration(durm1).ease("linear").attr("fill-opacity",function(d){return 0.5+0.5*(d.cN%2)})
+                .attr("y",function(d){return yScale(d.yRaw+d.width)})
+                .attr("height",function(d){return yScale(d.yRaw)-yScale(d.yRaw+d.width)})
+        
+        
+        
+        var frame = 0;
+        
+        
+        var indOld = 0;
+        
+        
+        function ColorParty()
+        {
+            
+            d3.select("#rects").selectAll('rect').transition("ColorParty").duration(dur0).attr("fill",function(d){return colorScale(d.Party)});
+            txtFun=txtFun1
+            
+        }
+        
+        function ColorWinner()
+        {
+            
+            d3.select("#rects").selectAll('rect').transition("ColorWinner").duration(dur0).attr("fill",function(d){return colorScale(d.Winner)})
+            txtFun=txtFun1
+        }
+        
+        
+        function ColorGrey()
+        {  
+                    
+            d3.select("#rects").selectAll('rect').transition("ColorGrey").duration(dur1).filter(function(d){return d.Winner!=d.Party}).attr("fill","grey")//.transition().delay(dur1).duration(dur2).remove()
+            txtFun=txtFun1
+
+        }
+        
+        
+        
+        function DropAndInflate()
+        {
+            
+                        d3.select("#rects").selectAll('rect').filter(function(d){return d.Winner!=d.Party}).transition("Remove").duration(dur2).remove()
+
+                        setTimeout( function(){
+
+                            
+
+                        d3.select("#rects").selectAll('rect').transition("Drop").duration(dur4).ease("bounce").attr("y",function(d){
+                          return yScale(d.yRaw-cH[d.Party][d.Winner]+d.width)}).transition("Inflate").attr("height",ht).attr("y",function(d){return yScale(avgVote*d.cN)} )
+                        }, dur2)
+            txtFun=txtFun1
+         
+        }
+        
+        
+        
+        function RedrawRects()
+        
+        {
+             console.log("rebuild anew the rects")
+                            d3.select("#rects").remove()   
+                            console.log("removed")
+                            initArrays()
+                            appendAll(data)
+                            console.log("appended")
+                            
+                            d3.select("#rects").selectAll('rect').attr("fill-opacity",function(d){return 0.5+0.5*(d.cN%2)})
+                                .attr("y",function(d){return yScale(d.yRaw+d.width)})
+                                .attr("height",function(d){return yScale(d.yRaw)-yScale(d.yRaw+d.width)})
+                            d3.select("#rects").selectAll('rect').attr("fill",function(d){return colorScale(d.Winner)})
+                            console.log("changed color")
+                        
+
+                    d3.select("#rects").selectAll('rect').transition("ColorGrey").duration(dur1).filter(function(d){return d.Winner!=d.Party}).attr("fill","grey")//.transition().delay(dur1).duration(dur2).remove()
+            txtFun=txtFun1
+
+            
+        }
+        
+        function RemoveLabels()
+        {
+            d3.selectAll("#seatsLabels").remove()
+            txtFun=txtFun1
+                    
+        }
+        
+        
+        function PutLabels()
+        {
+            d3.select("svg").append("g").attr("id","seatsLabels").selectAll("text").data(totals).enter().append("text").attr("x",function(d){return xScale(d.Party)+colWidth*0.5}).attr("y",yScale(0)+2*textSize).transition("SeatLabels").duration(dur6).text(function(d){console.log(d);return d.Seats}
+                    )
+                   
+            txtFun=txtFun2
+                    
+        }
+        
+        
+        
+        
+        function onScroll()
+        
+        {   
+           
+            
+            setBoxesStyle()
+            
+            
+            var ind = getScrollInd()
+            
+            console.log("scrolling!", indOld, ind)
+            
+            if (ind == indOld)
+                return;
+            
+            
+            funsScrollDown = [ColorParty,ColorWinner,ColorGrey,DropAndInflate,PutLabels]
+            funsScrollUp = [ColorParty,ColorWinner,RedrawRects,RemoveLabels,PutLabels]
+            
+            if (ind>indOld)
+            {    
+                
+            ind1 = indOld+1;
+           
+                
+            while (ind1<=ind)
+                {
+                    
+                    console.log("case "+ind1)
+                    funsScrollDown[ind1]()
+                    drawPercentageLabels()  
+                    drawFrames()
+                    ind1+=1;   
+                }
+            
+            }
+            
+            
+            else
+                 
+                
+            {    
+            
+            ind1 = indOld-1;
+           
+            while (ind1>=ind)
+                {
+                    console.log("case "+ind1)
+                    funsScrollUp[ind1]()
+                    drawPercentageLabels()
+                    drawFrames()
+                    frame+=1;
+            ind1-=1;
+            
+            }
+            
+            }
+                
+            indOld = ind;
+            
+            
+        }
+        
+        
+       d3.select(window).on("scroll.scroller",onScroll)
+       d3.select("div").on("scroll",onScroll)
+  
+    })
+    
+    
+   
+    
+    
+ 
+    
+    
+</script>
+
